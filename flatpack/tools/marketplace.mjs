@@ -1,255 +1,260 @@
-// Flatpack's Marketplace images and the performance charts in its README, drawn from the
-// demo's measurements (run `php artisan demo:compare --all` in flatpack-statamic-demo first). Every figure on them comes
-// from storage/demo-results/*.json, so re-measuring and re-running this updates them all.
+// Flatpack's Marketplace images and the performance charts in its README, in the 1994 house
+// style (../../_style), drawn from the demo's measurements: run `php artisan demo:compare --all`
+// in flatpack-statamic-demo first. Every figure comes from its storage/demo-results/*.json.
 //
 //   cd flatpack/tools && npm install && npm run marketplace
-//
-// Writes to this repo's flatpack/ folder (charts in flatpack/charts), so the images never ship
-// inside the addon people install.
 //
 // DEMO   the demo, for its results (default ../../../flatpack-statamic-demo, beside this repo)
 // ADDON  Flatpack, for its brand mark (default ../../../flatpack-statamic)
 // OUT    where to write (default this addon's folder, flatpack/)
 // CHROME a Chrome or Chromium to drive (default: Google Chrome on macOS)
 import { chromium } from 'playwright-core';
-import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdirSync } from 'node:fs';
+import * as house from '../../_style/house.mjs';
 
 const demo = (process.env.DEMO || new URL('../../../flatpack-statamic-demo', import.meta.url).pathname).replace(/\/?$/, '/');
 const addon = process.env.ADDON || new URL('../../../flatpack-statamic', import.meta.url).pathname;
-const chrome = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const work = new URL('./screenshots/', import.meta.url).pathname;
-mkdirSync(work, { recursive: true });
 const outDir = process.env.OUT || new URL('..', import.meta.url).pathname.replace(/\/$/, '');
+const chrome = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const work = new URL('./screenshots', import.meta.url).pathname;
 mkdirSync(`${outDir}/charts`, { recursive: true });
 
 // ---------------------------------------------------------------- the measurements
 
 const SHAPES = ['fixed', 'builder', 'nested'];
 const SIZES = ['small', 'medium', 'large'];
-const SHAPE_NAMES = { fixed: 'Fixed fields', builder: 'Page builder', nested: 'Nested page builder' };
+const SHAPE_NAMES = { fixed: 'Fixed fields', builder: 'Page builder', nested: 'Nested builder' };
+const ENTRIES = { small: '375', medium: '2,250', large: '9,000' };
 const results = {};
-let machine = '';
+let php = '';
 for (const f of readdirSync(`${demo}storage/demo-results`)) {
     const r = JSON.parse(readFileSync(`${demo}storage/demo-results/${f}`, 'utf8'));
     results[`${r.generated.shape}-${r.generated.size}`] = r;
-    machine = `PHP ${r.php}`;
+    php = r.php;
 }
 for (const s of SHAPES) for (const z of SIZES) {
     if (!results[`${s}-${z}`]) throw new Error(`No result for ${s} / ${z}: run php artisan demo:compare --all`);
 }
 const median = (a) => { const v = [...a].sort((x, y) => x - y); const n = v.length; return n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2; };
 const metric = {
-    build: { label: 'Build at deploy', get: (r, m) => r[m].build.ms, unit: 'ms' },
-    memory: { label: 'Build memory', get: (r, m) => r[m].build.peak_mb, unit: 'MB' },
-    page: { label: 'Typical page load', get: (r, m) => median(Object.values(r[m].pages)), unit: 'ms' },
-    save: { label: 'Saving an entry', get: (r, m) => r[m].save.ms, unit: 'ms' },
+    build: { label: 'Build at deploy', get: (r, m) => r[m].build.ms, unit: 'ms', word: 'faster' },
+    memory: { label: 'Build memory', get: (r, m) => r[m].build.peak_mb, unit: 'MB', word: 'less' },
+    page: { label: 'Typical page load', get: (r, m) => median(Object.values(r[m].pages)), unit: 'ms', word: 'faster' },
+    save: { label: 'Saving an entry', get: (r, m) => r[m].save.ms, unit: 'ms', word: 'faster' },
 };
 const val = (key, shape, size, mode) => metric[key].get(results[`${shape}-${size}`], mode);
 const fmt = (v, unit) => unit === 'MB' ? (v >= 1000 ? `${(v / 1024).toFixed(1)} GB` : `${Math.round(v)} MB`) : (v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${Math.round(v)} ms`);
 const ratio = (key, shape, size) => val(key, shape, size, 'statamic') / val(key, shape, size, 'flatpack');
 const x = (n) => `${n.toFixed(1)}×`;
-const entries = { small: '375', medium: '2,250', large: '9,000' };
+const big = (key) => [val(key, 'nested', 'large', 'statamic'), val(key, 'nested', 'large', 'flatpack')];
 
-// ---------------------------------------------------------------- the look (as the other 1994 addons)
+// ---------------------------------------------------------------- the look
 
-const brick = '#9A4A12';
-const kraft = '#D9A57C';
-const grey = '#B9B0A2';
-const mark = readFileSync(`${addon}/resources/brand/mark-colour.svg`, 'utf8').replace(/width="512" height="512"/, 'width="40" height="40"');
+const colour = house.addons.flatpack.main;
+const tones = house.ramp(colour);
+const markSvg = (fill, tint) => `<svg viewBox="0 0 14 14"><path fill="${fill}" d="M3.25 1.75H10.75V4.25H3.25Z"/><path fill="${fill}" d="M2.5 5.25H11.5V7.75H2.5Z"/><path fill="${fill}" d="M1.75 8.75H12.25V10H9.75V12.25H1.75Z"/><path fill="${tint}" d="M10.25 10.5H12.25L10.25 12.25Z"/></svg>`;
+const markInk = markSvg(colour, house.addons.flatpack.tint);
+const shade = house.ramp(colour).shade;
+const source = `Measured with the Dog-ear Books demo (php artisan demo:compare) on an Apple M1 Pro, PHP ${php}. 9,000 entries = 6,000 books with French and German translations.`;
+const sheetMeta = (right) => house.meta({ mark: markInk, left: 'Flatpack · for Statamic · free', right });
 
-const page = (body, w = 1600, h = 900) => `<!doctype html><html><head><meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-    * { box-sizing: border-box; }
-    body { margin: 0; width: ${w}px; height: ${h}px; overflow: hidden; background: #F2EDE3; color: #1d1d1f; font-family: 'Public Sans', sans-serif; position: relative; }
-    .brand { position: absolute; left: 80px; top: 56px; display: flex; align-items: center; gap: 14px; font: 40px/1 Gloock, serif; color: ${brick}; }
-    .for { position: absolute; font-size: 22px; font-weight: 500; color: #57534e; }
-    .num { font: italic 30px Gloock, serif; color: ${brick}; margin: 0 0 14px; }
-    h1 { font: 64px/1.02 Gloock, serif; letter-spacing: -0.02em; margin: 0 0 26px; }
-    .lede { font-size: 23px; line-height: 1.45; color: #57534e; margin: 0; }
-    .copy { position: absolute; left: 80px; top: 260px; width: 440px; }
-    .panel { position: absolute; background: #fff; border: 1px solid #e4ddd0; border-radius: 18px; box-shadow: 0 30px 60px rgba(40, 30, 20, .10); }
-    .note { position: absolute; font-size: 15px; color: #8a8378; }
-    .key { display: flex; gap: 22px; font-size: 17px; color: #57534e; }
-    .key i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
-    .stat { font: 76px/1 Gloock, serif; color: ${brick}; letter-spacing: -0.02em; }
-    .from { font-size: 20px; color: #8a8378; }
-</style></head><body>${body}</body></html>`;
-
-const brand = `<div class="brand">${mark}<span>Flatpack</span></div>`;
-const source = (extra = '') => `Measured with the Dog-ear Books demo (php artisan demo:compare), ${machine}, Apple M1 Pro. ${extra}`;
-
-// Horizontal bars, Statamic against Flatpack, for every shape and size of one measure.
-function bars(key, { width = 900, rowGap = 14, barH = 15, showRatio = true } = {}) {
-    const unit = metric[key].unit;
-    let max = 0;
-    for (const s of SHAPES) for (const z of SIZES) max = Math.max(max, val(key, s, z, 'statamic'), val(key, s, z, 'flatpack'));
-    const labelW = 150, valueW = 230, track = width - labelW - valueW;
-    const w = (v) => Math.max(2, Math.round((v / max) * track));
-    let html = '';
-    for (const s of SHAPES) {
-        html += `<div style="font:600 17px 'Public Sans';color:#1d1d1f;margin:${s === 'fixed' ? 0 : 22}px 0 8px">${SHAPE_NAMES[s]}</div>`;
-        for (const z of SIZES) {
-            const a = val(key, s, z, 'statamic'), b = val(key, s, z, 'flatpack');
-            html += `<div style="display:flex;align-items:center;margin-bottom:${rowGap}px">
-                <div style="width:${labelW}px;font-size:16px;color:#57534e">${z[0].toUpperCase() + z.slice(1)} <span style="color:#a39b8f">· ${entries[z]}</span></div>
-                <div style="width:${track}px">
-                    <div style="height:${barH}px;width:${w(a)}px;background:${grey};border-radius:3px;margin-bottom:4px"></div>
-                    <div style="height:${barH}px;width:${w(b)}px;background:${brick};border-radius:3px"></div>
-                </div>
-                <div style="width:${valueW}px;padding-left:16px;font-size:16px;color:#57534e;white-space:nowrap">${fmt(a, unit)} → <b style="color:#1d1d1f">${fmt(b, unit)}</b>${showRatio ? ` <span style="color:${brick};font-weight:600">${x(a / b)}</span>` : ''}</div>
-            </div>`;
-        }
-    }
-    return html;
-}
-
-const legend = `<div class="key"><span><i style="background:${grey}"></i>Statamic</span><span><i style="background:${brick}"></i>With Flatpack</span></div>`;
-
-function chartScreen(num, title, lede, key, extra = '') {
-    return page(`${brand}
-        <div class="copy"><p class="num">${num}</p><h1>${title}</h1><p class="lede">${lede}</p></div>
-        <div class="for" style="left:80px;bottom:56px">For Statamic</div>
-        <div class="panel" style="left:600px;top:70px;width:940px;padding:30px 34px 24px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div style="font:28px Gloock,serif">${metric[key].label}</div>${legend}</div>
-            ${bars(key, { width: 870, rowGap: 9, barH: 13 })}
-        </div>
-        <div class="note" style="left:600px;bottom:22px;width:940px">${source(extra)}</div>`);
-}
-
-// ---------------------------------------------------------------- the Marketplace images
-
-const nl = (k) => ratio(k, 'nested', 'large');
 const frames = {};
 
-frames['cover-1600x900'] = page(`${brand}
-    <div class="for" style="right:80px;top:68px">For Statamic · Free</div>
-    <h1 style="position:absolute;left:80px;top:180px;font-size:104px;line-height:.98">Same files.<br><span style="color:${brick}">Less waiting.</span></h1>
-    <p class="lede" style="position:absolute;left:80px;top:430px;width:560px">Flatpack compiles Statamic's flat-file content at deploy into PHP that OPcache serves from memory. Your Markdown and YAML stay the source of truth.</p>
-    <div style="position:absolute;left:80px;top:640px;display:flex;gap:56px">
-        <div><div class="stat">${x(nl('build'))}</div><div class="from">faster builds</div></div>
-        <div><div class="stat">${x(nl('memory'))}</div><div class="from">less memory</div></div>
-        <div><div class="stat">${x(nl('save'))}</div><div class="from">faster saves</div></div>
-    </div>
-    <div class="panel" style="left:830px;top:150px;width:690px;padding:30px 34px">
-        <div style="font:26px Gloock,serif;margin-bottom:4px">A 9,000-entry site with deep page builders</div>
-        <div style="font-size:16px;color:#8a8378;margin-bottom:26px">Statamic → with Flatpack</div>
-        ${[['build', 'Build at deploy'], ['memory', 'Build memory'], ['save', 'Saving an entry']].map(([k, l]) => {
-            const a = val(k, 'nested', 'large', 'statamic'), b = val(k, 'nested', 'large', 'flatpack');
-            return `<div style="margin-bottom:26px"><div style="display:flex;justify-content:space-between;font-size:18px;margin-bottom:8px"><span>${l}</span><span style="color:#57534e">${fmt(a, metric[k].unit)} → <b style="color:#1d1d1f">${fmt(b, metric[k].unit)}</b></span></div>
-                <div style="height:18px;background:${grey};border-radius:4px;margin-bottom:5px"></div>
-                <div style="height:18px;width:${Math.round((b / a) * 100)}%;background:${brick};border-radius:4px"></div></div>`;
-        }).join('')}
-        ${legend}
-    </div>
-    <div class="note" style="left:830px;top:600px;width:690px">${source()}</div>`);
+// ---------------------------------------------------------------- cover: the colour field
 
-frames['01-build'] = chartScreen('01', 'Builds in a fraction of the time',
-    `On a 9,000-entry site with nested page builders, a deploy's content build goes from ${fmt(val('build', 'nested', 'large', 'statamic'), 'ms')} to ${fmt(val('build', 'nested', 'large', 'flatpack'), 'ms')}. The bigger and deeper the content, the bigger the gap.`, 'build');
+frames['cover-1600x900'] = house.page({
+    kind: 'cover', colour,
+    css: `.ghost { position: absolute; right: 56px; bottom: 36px; width: 430px; height: 430px; }
+          .claim { position: absolute; left: 66px; top: 200px; font-size: 212px; }
+          .lede { position: absolute; left: 72px; bottom: 112px; width: 660px; }
+          .facts { position: absolute; left: 72px; bottom: 62px; font: 500 19px 'IBM Plex Mono'; color: rgba(255,246,238,.75); }`,
+    body: `<div class="ghost">${markSvg(shade, house.ramp(colour).mid)}</div>
+        ${house.meta({ mark: markSvg('#FFF6EE', house.addons.flatpack.tint), left: 'Flatpack · for Statamic · free', right: 'flatpack:build' })}
+        <div class="display claim">Builds<br>${x(ratio('build', 'nested', 'large'))} faster.</div>
+        <p class="lede">Statamic's flat files, compiled at deploy into PHP that OPcache serves from memory. Your Markdown and YAML stay the source of truth.</p>
+        <div class="facts">${fmt(big('build')[0], 'ms')} → ${fmt(big('build')[1], 'ms')} · ${fmt(big('memory')[0], 'MB')} → ${fmt(big('memory')[1], 'MB')} · on a 9,000-entry site</div>`,
+});
 
-frames['02-memory'] = chartScreen('02', 'A fraction of the memory',
-    `Big page builders aren't parsed until a page needs them, so a build that took ${fmt(val('memory', 'nested', 'large', 'statamic'), 'MB')} now fits in ${fmt(val('memory', 'nested', 'large', 'flatpack'), 'MB')}. Room to spare on small servers.`, 'memory');
+// ---------------------------------------------------------------- the number is the picture
 
-const deeperRows = [['build', 'Build at deploy', 'faster'], ['memory', 'Build memory', 'less'], ['save', 'Saving an entry', 'faster']];
-const cols = { fixed: 'Fixed fields', builder: 'Page builder', nested: 'Nested builder' };
-frames['03-deeper'] = page(`${brand}
-    <div class="copy"><p class="num">03</p><h1>The deeper your page builder, the more it helps</h1><p class="lede">Fixed fields gain a little. Page builders gain a lot. Sections inside columns inside blocks gain the most.</p></div>
-    <div class="for" style="left:80px;bottom:56px">For Statamic</div>
-    <div class="panel" style="left:600px;top:232px;width:920px;padding:0">
-        <div style="display:grid;grid-template-columns:200px repeat(3,1fr);border-bottom:1px solid #eee7da">
-            <div style="padding:26px 30px;font-size:15px;color:#8a8378;align-self:end">9,000 entries,<br>with Flatpack</div>
-            ${SHAPES.map((sh) => `<div style="padding:26px 24px;border-left:1px solid #eee7da"><div style="font:26px Gloock,serif">${cols[sh]}</div></div>`).join('')}
-        </div>
-        ${deeperRows.map(([k, label, word], ri) => {
-            const top = Math.max(...SHAPES.map((sh) => ratio(k, sh, 'large')));
-            return `<div style="display:grid;grid-template-columns:200px repeat(3,1fr);${ri < 2 ? 'border-bottom:1px solid #eee7da' : ''}">
-                <div style="padding:30px;font-size:18px;color:#57534e;align-self:center">${label}</div>
-                ${SHAPES.map((sh) => { const r = ratio(k, sh, 'large'); return `<div style="padding:26px 24px;border-left:1px solid #eee7da">
-                    <div style="display:flex;align-items:baseline;gap:8px"><span class="stat" style="font-size:56px">${r.toFixed(1)}×</span><span style="font-size:17px;color:#8a8378">${word}</span></div>
-                    <div style="height:10px;background:#f1ebe0;border-radius:5px;margin-top:14px"><div style="height:10px;width:${Math.round((r / top) * 100)}%;background:${brick};border-radius:5px"></div></div>
-                </div>`; }).join('')}
-            </div>`;
-        }).join('')}
-    </div>
-    <div class="note" style="left:600px;bottom:40px;width:920px">${source('Saves are single measurements.')}</div>`);
+function numberPicture(part, key, title, lede) {
+    const [a, b] = big(key);
+    const H = 600, hA = H, hB = Math.max(40, Math.round((b / a) * H));
+    return house.page({
+        css: `.t { position: absolute; left: 72px; top: 170px; width: 640px; }
+              .l { position: absolute; left: 72px; top: 470px; width: 560px; color: #3a3a3a; }
+              .bar { position: absolute; bottom: 0; width: 300px; }
+              .n { position: absolute; font: 900 104px/0.85 Archivo; font-stretch: 70%; letter-spacing: -0.02em; }
+              .who-bar { position: absolute; font: 600 19px 'IBM Plex Mono'; letter-spacing: .04em; }`,
+        body: `${sheetMeta(part)}
+            <div class="title t">${title}</div>
+            <p class="lede l">${lede}</p>
+            <div class="bar" style="left:870px;height:${hA}px;background:${house.statamicGrey}"></div>
+            <div class="bar" style="left:1220px;height:${hB}px;background:${colour}"></div>
+            <div class="n" style="left:870px;top:${900 - hA - 120}px">${fmt(a, metric[key].unit)}</div>
+            <div class="who-bar" style="left:872px;top:${900 - hA - 30}px">STATAMIC</div>
+            <div class="n" style="left:1220px;top:${900 - hB - 120}px;color:${colour}">${fmt(b, metric[key].unit)}</div>
+            <div class="who-bar" style="left:1222px;top:${900 - hB - 30}px;color:${colour}">WITH FLATPACK</div>
+            <div class="foot" style="right:auto;width:700px">${metric[key].label}, 9,000 entries with nested page builders. ${source}</div>`,
+    });
+}
 
-frames['04-saves'] = chartScreen('04', 'Saves that don’t wait for the whole site',
-    'Saving in the Control Panel writes exactly the same file Statamic does, then updates only what changed in the compiled copy.', 'save', 'Saves are single measurements, so treat them as a direction.');
+frames['01-build'] = numberPicture('FP-01 · flatpack:build', 'build', `${x(ratio('build', 'nested', 'large'))} faster builds`,
+    'The deploy step that compiles your content. The bigger the site and the deeper its page builders, the more time it saves.');
+frames['02-memory'] = numberPicture('FP-02 · lazy fields', 'memory', `${x(ratio('memory', 'nested', 'large'))} less memory`,
+    'Page builders and long Bard fields stay unparsed until a page actually reads them, so builds fit on small servers.');
 
-const code = (lines) => `<pre style="margin:0;font:19px/1.65 'JetBrains Mono',monospace;color:#1d1d1f;white-space:pre">${lines}</pre>`;
-frames['05-deploy'] = page(`${brand}
-    <div class="copy"><p class="num">05</p><h1>One line in your deploy</h1><p class="lede">Swap Statamic's Stache warm for a Flatpack build. On Laravel Forge, in the deploy script. On Laravel Cloud, in the build commands. No extra PHP extensions.</p></div>
-    <div class="for" style="left:80px;bottom:56px">For Statamic</div>
-    <div class="panel" style="left:640px;top:150px;width:880px;padding:32px 38px">
-        <div style="font-size:15px;font-weight:600;color:#8a8378;letter-spacing:.08em;margin-bottom:14px">YOUR DEPLOY SCRIPT</div>
-        ${code(`composer install --no-dev --optimize-autoloader
-php artisan config:cache
-<span style="color:#a39b8f;text-decoration:line-through">php please stache:warm</span>
-<b style="color:${brick}">php please flatpack:build</b>
-php please static:warm --queue`)}
-    </div>
-    <div style="position:absolute;left:640px;top:520px;width:880px;display:grid;grid-template-columns:repeat(3,1fr);gap:22px">
-        ${[['Forge', 'Runs on every server in its own deploy.'], ['Laravel Cloud', 'In build commands, baked into every replica.'], ['Switched off?', 'It warms Statamic’s own Stache instead, so the script still works.']].map(([t, d]) => `<div class="panel" style="position:relative;padding:24px 26px"><div style="font:24px Gloock,serif;color:${brick};margin-bottom:8px">${t}</div><div style="font-size:17px;line-height:1.45;color:#57534e">${d}</div></div>`).join('')}
-    </div>`);
+// ---------------------------------------------------------------- the deeper the builder
 
-const icon = (path) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="${brick}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
-const features = [
-    ['M4 4h12l4 4v12H4z M8 12h8M8 16h5', 'Files stay the truth', 'Markdown and YAML, edited and committed as now. Flatpack is only a cache.'],
-    ['M13 2L4 14h7l-1 8 9-12h-7z', 'Compiled for OPcache', 'Content becomes plain PHP files served from shared memory.'],
-    ['M3 7h18M3 12h18M3 17h12', 'Big fields on demand', 'Page builders and long Bard fields are parsed when a page reads them.'],
-    ['M3 12a9 9 0 1 0 3-6.7M3 4v5h5', 'Refresh after a pull', 'Only changed files are re-read, deletions and page trees included.'],
-    ['M4 4h16v16H4zM4 9h16M9 20V9', 'In the Control Panel', 'What’s compiled, what changed on disk, and a rebuild button.'],
-    ['M9 12l2 2 4-4M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7z', 'Tested against Statamic', 'Reads, saves and refreshes checked to match plain Statamic, on 5 and 6.'],
-    ['M12 3l9 5-9 5-9-5zM3 13l9 5 9-5', 'Statamic 5.11+ and 6', 'One package for both. PHP 8.2 or later.'],
-    ['M4 4h16v6H4zM4 14h16v6H4zM8 7h.01M8 17h.01', 'No extensions', 'Runs on a stock Forge or Laravel Cloud server.'],
-    ['M6 6l12 12M18 6L6 18', 'Easy to switch off', 'One environment variable puts Statamic back on its own Stache.'],
+// A small line drawing of each shape of content: one board; boards stacked; boards holding boards.
+function shapeDrawing(shape, ox, oy) {
+    const w = house.box;
+    if (shape === 'fixed') return w(ox, oy + 40, 150, 100, 14);
+    if (shape === 'builder') return [0, 1, 2].map((i) => w(ox, oy + i * 34, 150, 100, 14)).join('');
+    return [0, 1, 2].map((i) => w(ox, oy + i * 34, 150, 100, 14)
+        + w(ox + 30, oy + i * 34 + 6, 34, 30, 8, [tones.light, tones.mid, tones.main], { width: 2 })
+        + w(ox + 82, oy + i * 34 + 6, 34, 30, 8, [tones.light, tones.mid, tones.main], { width: 2 })).join('');
+}
+const deeperRows = [['build', 'Build'], ['memory', 'Memory'], ['save', 'Saves']];
+frames['03-deeper'] = house.page({
+    css: `.t { position: absolute; left: 72px; top: 170px; width: 520px; }
+          .l { position: absolute; left: 72px; top: 520px; width: 470px; color: #3a3a3a; }
+          .col { position: absolute; top: 166px; width: 280px; }
+          .col h3 { font: 900 34px/1 Archivo; font-stretch: 72%; text-transform: uppercase; margin-top: 196px; padding-bottom: 14px; border-bottom: 3px solid ${house.ink}; }
+          .row { padding: 12px 0 10px; border-bottom: 1px solid ${house.hairline}; }
+          .row .label { color: ${house.muted}; }
+          .row b { display: block; font: 900 60px/1 Archivo; font-stretch: 72%; color: ${colour}; margin-top: 2px; }
+          .meter { height: 8px; background: #F1ECE6; margin-top: 10px; }
+          .meter i { display: block; height: 8px; background: ${colour}; }`,
+    body: `${sheetMeta('FP-03 · how much it helps')}
+        <div class="title t">The deeper the builder, the bigger the win</div>
+        <p class="lede l">Times faster, or times less memory, with Flatpack, on 9,000 entries of each kind.</p>
+        <svg style="position:absolute;left:0;top:0" width="1600" height="900">${SHAPES.map((s, i) => shapeDrawing(s, 759 + i * 300, 136)).join('')}</svg>
+        ${SHAPES.map((s, i) => `<div class="col" style="left:${640 + i * 300}px"><h3>${SHAPE_NAMES[s]}</h3>
+            ${deeperRows.map(([k, label]) => {
+                const top = Math.max(...SHAPES.map((sh) => ratio(k, sh, 'large')));
+                const r = ratio(k, s, 'large');
+                return `<div class="row"><span class="label caps">${label}</span><b>${x(r)}</b><div class="meter"><i style="width:${Math.round((r / top) * 100)}%"></i></div></div>`;
+            }).join('')}</div>`).join('')}
+        <div class="foot" style="left:640px">${source}</div>`,
+});
+
+// ---------------------------------------------------------------- saves: an assembly diagram
+
+const sheet = (ox, oy, hi) => house.box(ox, oy, 150, 110, 10, hi ? [tones.light, tones.mid, tones.main] : undefined);
+const [saveA, saveB] = big('save');
+frames['04-saves'] = house.page({
+    css: `.t { position: absolute; left: 72px; top: 170px; width: 900px; }
+          .cap { position: absolute; width: 330px; font: 500 19px/1.45 'IBM Plex Mono'; }`,
+    body: `${sheetMeta('FP-04 · saving')}
+        <div class="title t">Saves that don't wait for the whole site</div>
+        <svg style="position:absolute;left:0;top:0" width="1600" height="900">
+            ${house.box(270, 470, 180, 130, 10)}
+            ${house.box(274, 477, 120, 14, 3)}${house.box(248, 492, 120, 14, 3)}${house.box(222, 507, 120, 14, 3)}
+            ${house.box(283, 562, 44, 18, 6, [tones.light, tones.mid, tones.main])}
+            ${house.stepMark(110, 430, 1)}
+            ${house.arrow(470, 560, 600)}
+            ${sheet(760, 480)}
+            ${house.stepMark(620, 430, 2)}
+            ${house.arrow(930, 560, 1060)}
+            ${[0, 1, 2, 3].map((i) => sheet(1260, 420 + i * 34, i === 1)).join('')}
+            ${house.stepMark(1080, 430, 3)}
+        </svg>
+        <div class="cap" style="left:110px;top:690px">Save an entry in the Control Panel, as now.</div>
+        <div class="cap" style="left:620px;top:690px">Statamic writes the same .md file it always does.</div>
+        <div class="cap" style="left:1080px;top:690px">Flatpack updates only that entry in the compiled copy.</div>
+        <div class="tab" style="right:72px;top:150px;background:${colour}"><b>${fmt(saveA, 'ms')} → ${fmt(saveB, 'ms')}</b><span>saving an entry, 9,000-entry site</span></div>
+        <div class="foot">${source} Saves are single measurements: read them as a direction.</div>`,
+});
+
+// ---------------------------------------------------------------- the deploy: numbered steps
+
+const steps = [
+    ['composer install --no-dev', 'as now', false],
+    ['php artisan config:cache', 'as now', false],
+    ['php please flatpack:build', 'instead of stache:warm', true],
+    ['php please static:warm', 'as now, now reading compiled content', false],
 ];
-frames['06-everything'] = page(`${brand}
-    <div class="for" style="right:80px;top:68px">For Statamic · Free</div>
-    <h1 style="position:absolute;left:80px;top:128px;font-size:60px">Everything in Flatpack</h1>
-    <div style="position:absolute;left:80px;top:236px;width:1440px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
-        ${features.map(([path, title, text]) => `<div style="background:#fff;border:1px solid #e4ddd0;border-radius:14px;padding:26px 28px;height:156px">
-            <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px"><span style="display:grid;place-items:center;width:40px;height:40px;border-radius:9px;background:#F5E7DA">${icon(path)}</span><span style="font:30px Gloock,serif;color:${brick}">${title}</span></div>
-            <div style="font-size:19px;line-height:1.4;color:#57534e">${text}</div></div>`).join('')}
-    </div>
-    <div style="position:absolute;left:80px;bottom:52px;display:flex;gap:36px;font-size:19px;font-weight:500">
-        <span>flatpack:build · flatpack:refresh · flatpack:status</span><span style="color:#57534e">Statamic 5.11+ and 6 · PHP 8.2+ · MIT licence</span>
-    </div>`);
+frames['05-deploy'] = house.page({
+    css: `.t { position: absolute; left: 72px; top: 170px; width: 520px; }
+          .l { position: absolute; left: 72px; top: 470px; width: 470px; color: #3a3a3a; }
+          .steps { position: absolute; left: 680px; top: 160px; width: 850px; }
+          .s { display: grid; grid-template-columns: 64px 1fr; align-items: center; padding: 20px 0; border-bottom: 1px solid ${house.hairline}; }
+          .s code { font: 500 26px 'IBM Plex Mono'; }
+          .s small { display: block; font: 400 17px 'IBM Plex Mono'; color: ${house.muted}; margin-top: 4px; }
+          .s.hot code { color: ${colour}; font-weight: 600; }
+          .s.hot .step { background: ${colour}; border-color: ${colour}; color: #fff; }
+          .where { position: absolute; left: 680px; top: 650px; width: 850px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+          .where b { display: block; font: 900 30px/1 Archivo; font-stretch: 72%; text-transform: uppercase; margin-bottom: 8px; }
+          .where span { font: 500 18px/1.45 Archivo; color: #3a3a3a; }`,
+    body: `${sheetMeta('FP-05 · deploy')}
+        <div class="title t">One line in your deploy</div>
+        <p class="lede l">Swap Statamic's Stache warm for a Flatpack build. No extra PHP extensions.</p>
+        <div class="steps">${steps.map(([cmd, note, hot], i) => `<div class="s${hot ? ' hot' : ''}"><span class="step">${i + 1}</span><div><code>${cmd}</code><small>${note}</small></div></div>`).join('')}</div>
+        <div class="where">
+            <div><b>Laravel Forge</b><span>In the deploy script, on every server.</span></div>
+            <div><b>Laravel Cloud</b><span>In build commands, so every replica starts built.</span></div>
+            <div><b>Switched off</b><span>It warms Statamic's own Stache, so the script still works.</span></div>
+        </div>`,
+});
+
+// ---------------------------------------------------------------- what's in the box: a parts list
+
+const parts = [
+    ['flatpack:build', 'Compiles all content at deploy, large fields pre-parsed in parallel.'],
+    ['flatpack:refresh', 'After a git pull: only changed files, deletions and page trees included.'],
+    ['flatpack:status', 'What’s compiled, how big, and what changed on disk.'],
+    ['Control Panel page', 'The same, under Utilities, with Build and Refresh buttons.'],
+    ['Lazy large fields', 'Page builders and long Bard fields parsed when a page reads them.'],
+    ['Parity suite', 'Reads, saves and refreshes checked against plain Statamic, on 5 and 6.'],
+];
+frames['06-everything'] = house.page({
+    css: `.t { position: absolute; left: 72px; top: 150px; }
+          .grid { position: absolute; left: 72px; top: 300px; right: 72px; display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 48px; }
+          .p { display: grid; grid-template-columns: 56px 1fr; padding: 24px 0; border-top: 3px solid ${house.ink}; }
+          .p .letter { font: 600 22px 'IBM Plex Mono'; color: ${colour}; }
+          .p b { display: block; font: 900 36px/1 Archivo; font-stretch: 72%; text-transform: uppercase; margin-bottom: 8px; }
+          .p span { font: 500 19px/1.45 Archivo; color: #3a3a3a; }
+          .inv { position: absolute; left: 72px; right: 72px; bottom: 56px; display: flex; justify-content: space-between; font: 500 19px 'IBM Plex Mono'; padding-top: 18px; border-top: 1px solid ${house.hairline}; }`,
+    body: `${sheetMeta('FP · contents')}
+        <div class="title t">What's in the box</div>
+        <div class="grid">${parts.map(([name, text], i) => `<div class="p"><span class="letter">${String.fromCharCode(65 + i)}</span><div><b>${name}</b><span>${text}</span></div></div>`).join('')}</div>
+        <div class="inv"><span>Statamic 5.11+ and 6 · PHP 8.2+</span><span>No extra PHP extensions · Forge and Laravel Cloud</span><span style="color:${colour}">Free · MIT licence</span></div>`,
+});
 
 // ---------------------------------------------------------------- README charts (one per measure)
 
-const readme = {};
+function bars(key, width) {
+    const unit = metric[key].unit;
+    let max = 0;
+    for (const s of SHAPES) for (const z of SIZES) max = Math.max(max, val(key, s, z, 'statamic'));
+    const labelW = 170, valueW = 250, track = width - labelW - valueW;
+    const w = (v) => Math.max(2, Math.round((v / max) * track));
+    return SHAPES.map((s) => `<div style="font:900 26px/1 Archivo;font-stretch:72%;text-transform:uppercase;margin:22px 0 10px;padding-bottom:8px;border-bottom:3px solid ${house.ink}">${SHAPE_NAMES[s]}</div>
+        ${SIZES.map((z) => {
+            const a = val(key, s, z, 'statamic'), b = val(key, s, z, 'flatpack');
+            return `<div style="display:flex;align-items:center;margin-bottom:10px">
+                <div style="width:${labelW}px;font:500 16px 'IBM Plex Mono'">${z.toUpperCase()} <span style="color:${house.muted}">${ENTRIES[z]}</span></div>
+                <div style="width:${track}px"><div style="height:13px;width:${w(a)}px;background:${house.statamicGrey};margin-bottom:4px"></div><div style="height:13px;width:${w(b)}px;background:${colour}"></div></div>
+                <div style="width:${valueW}px;padding-left:16px;font:500 16px 'IBM Plex Mono';white-space:nowrap">${fmt(a, unit)} → <b>${fmt(b, unit)}</b> <span style="color:${colour};font-weight:600">${x(a / b)}</span></div>
+            </div>`;
+        }).join('')}`).join('');
+}
+const legend = `<div style="display:flex;gap:24px;font:500 16px 'IBM Plex Mono'"><span><i style="display:inline-block;width:14px;height:14px;background:${house.statamicGrey};margin-right:8px;vertical-align:-2px"></i>STATAMIC</span><span><i style="display:inline-block;width:14px;height:14px;background:${colour};margin-right:8px;vertical-align:-2px"></i>WITH FLATPACK</span></div>`;
+const charts = {};
 for (const key of Object.keys(metric)) {
-    readme[`performance-${key}`] = page(`<div style="padding:34px 40px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div style="font:30px Gloock,serif">${metric[key].label}</div>${legend}</div>
-        ${bars(key, { width: 1120, rowGap: 9, barH: 13 })}
-        <div style="font-size:14px;color:#8a8378;margin-top:12px">${source(key === 'save' ? 'Saves are single measurements.' : '')} Entries include French and German translations.</div>
-    </div>`, 1200, 600);
+    charts[`performance-${key}`] = house.page({
+        width: 1200, height: 700,
+        body: `<div style="padding:36px 44px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px"><div class="title" style="font-size:54px">${metric[key].label}</div>${legend}</div>
+            ${bars(key, 1112)}
+            <div style="font:400 14px 'IBM Plex Mono';color:${house.muted};margin-top:14px">${source}${key === 'save' ? ' Saves are single measurements.' : ''}</div></div>`,
+    });
 }
 
 // ---------------------------------------------------------------- render
 
-const browser = await chromium.launch({ executablePath: chrome });
-async function render(name, html, dir, w = 1600, h = 900, scales = [[1, ''], [2, '-2x']], transparent = false) {
-    const file = `${work}${name}.html`;
-    writeFileSync(file, html);
-    for (const [scale, suffix] of scales) {
-        const context = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: scale });
-        const tab = await context.newPage();
-        await tab.goto(`file://${file}`);
-        await tab.evaluate(() => document.fonts.ready);
-        await tab.waitForTimeout(400);
-        await tab.screenshot({ path: `${dir}/${name}${suffix}.png`, omitBackground: transparent });
-        await context.close();
-    }
-}
-for (const [name, html] of Object.entries(frames)) await render(name, html, `${outDir}`);
-for (const [name, html] of Object.entries(readme)) await render(name, html, `${outDir}/charts`, 1200, 600, [[2, '']]);
-
-// The addon icon at 512 and 1024.
-const iconSvg = readFileSync(`${outDir}/addon-icon.svg`, 'utf8');
-await render('addon-icon', `<html><body style="margin:0;background:transparent">${iconSvg}</body></html>`, `${outDir}`, 512, 512, [[1, ''], [2, '-2x']], true);
-
-await browser.close();
+await house.render(chromium, frames, outDir, { work, executablePath: chrome });
+await house.render(chromium, charts, `${outDir}/charts`, { width: 1200, height: 700, scales: [[2, '']], work, executablePath: chrome });
+await house.render(chromium, { 'addon-icon': `<html><body style="margin:0;background:transparent">${readFileSync(`${outDir}/addon-icon.svg`, 'utf8')}</body></html>` }, outDir, { width: 512, height: 512, transparent: true, work, executablePath: chrome });
 console.log(`Listing images in ${outDir}, charts in ${outDir}/charts`);
