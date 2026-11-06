@@ -1,0 +1,1 @@
+{"provider": "cookiebot", "values": {"cbid": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d", "cdn": "com", "autoBlocking": true}, "google": {"gtmId": "GTM-ABC1234", "ga4Id": "G-ABC123XYZ9"}, "scripts": [{"name": "Hotjar", "categories": ["analytics"], "placement": "head", "code": "<script>/* Hotjar tracking code */</script>"}]}

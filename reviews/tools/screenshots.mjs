@@ -1,0 +1,120 @@
+// Screenshots of Dog-ear Books, as used in Reviews' docs and Marketplace
+// listing. Run against a freshly seeded demo (php artisan demo:seed --fresh)
+// with the demo users:
+//
+//   cd reviews/tools && npm install && npm run screenshots
+//
+// DEMO_URL     the demo's address (default https://reviews-sandbox.test)
+// SCREENSHOTS  where to write them (default ./screenshots)
+// CHROME       a Chrome or Chromium to drive (default: Google Chrome on macOS)
+// REVIEW       the ID of a review with a reply, for the Control Panel's review page
+import { chromium } from 'playwright-core';
+import { mkdirSync } from 'node:fs';
+
+const base = (process.env.DEMO_URL || 'https://reviews-sandbox.test').replace(/\/$/, '');
+const out = process.env.SCREENSHOTS || new URL('./screenshots', import.meta.url).pathname;
+const chrome = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+mkdirSync(out, { recursive: true });
+
+// Local demos often use a self-signed certificate (Herd, Valet).
+const browser = await chromium.launch({ args: ['--ignore-certificate-errors'], executablePath: chrome });
+const desktop = { viewport: { width: 1280, height: 860 }, deviceScaleFactor: 2, colorScheme: 'light' };
+
+async function settle(page) {
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(600);
+}
+
+const shop = await browser.newContext(desktop);
+const page = await shop.newPage();
+
+await page.goto(`${base}/products/a-field-guide-to-leaving`);
+await settle(page);
+await page.screenshot({ path: `${out}/product.png` });
+
+await page.goto(`${base}/products/a-field-guide-to-leaving`);
+await settle(page);
+const reviews = page.locator('#reviews');
+await reviews.scrollIntoViewIfNeeded();
+const box = await reviews.boundingBox();
+await page.screenshot({ path: `${out}/reviews.png`, clip: { x: box.x - 32, y: box.y - 8, width: box.width + 64, height: 860 } });
+
+const form = page.locator('.review-form');
+await page.click('label[for=rating-4]');
+await page.fill('input[name=title]', 'A book to keep');
+await page.fill('textarea[name=body]', 'Short chapters, perfect for the commute. I read the last one twice.');
+await page.fill('input[name=name]', 'Sam Reader');
+await page.fill('input[name=email]', 'sam@example.com');
+await form.screenshot({ path: `${out}/form.png` });
+
+// The ready-made views and default styles ({{ reviews:display }}), on the
+// shop's own fonts and colours, and on a dark page.
+const ready = await shop.newPage();
+await ready.goto(`${base}/ready-made`);
+await settle(ready);
+const section = async () => {
+    const box = await ready.locator('#reviews').boundingBox();
+    const columns = await ready.locator('#reviews .reviews-ui__columns').boundingBox();
+    return { x: box.x - 40, y: box.y - 32, width: box.width + 80, height: columns.y + columns.height - box.y + 64 };
+};
+await ready.screenshot({ path: `${out}/ready-made.png`, fullPage: true, clip: await section() });
+await ready.addStyleTag({ content: 'body,.masthead{background:#15171c!important;color:#e9e6df!important} .masthead a,.wordmark{color:inherit!important}' });
+await settle(ready);
+await ready.screenshot({ path: `${out}/ready-made-dark.png`, fullPage: true, clip: await section() });
+
+const readyForm = await shop.newPage();
+await readyForm.goto(`${base}/ready-made`);
+await settle(readyForm);
+await readyForm.click('label[for=reviews-rating-4]');
+await readyForm.fill('#write-a-review input[name=title]', 'A book to keep');
+await readyForm.fill('#write-a-review textarea[name=body]', 'Short chapters, perfect for the commute. I read the last one twice.');
+await readyForm.fill('#write-a-review input[name=name]', 'Sam Reader');
+await readyForm.fill('#write-a-review input[name=email]', 'sam@example.com');
+await readyForm.locator('#write-a-review input[name=email]').evaluate((el) => el.blur());
+await readyForm.locator('.reviews-ui__form').screenshot({ path: `${out}/ready-made-form.png` });
+
+// A review imported from Trustpilot, showing where it came from.
+await page.goto(`${base}/products/coral-arithmetic?sort=newest`);
+await settle(page);
+await page.locator('article', { hasText: 'From Trustpilot' }).first().screenshot({ path: `${out}/imported.png` });
+
+// The Control Panel, as the demo admin.
+const cp = await browser.newContext(desktop);
+const admin = await cp.newPage();
+// Signed in with the demo's own front-end sign-in form.
+await admin.goto(`${base}/login`);
+await admin.fill('input[name=email]', 'admin@example.com');
+await admin.fill('input[name=password]', 'password');
+await Promise.all([admin.waitForNavigation(), admin.click('button[type=submit]')]);
+
+// Trial-mode licence notice, if Statamic shows one.
+const snooze = admin.getByText('Snooze');
+
+await admin.goto(`${base}/cp/reviews`);
+await settle(admin);
+if (await snooze.isVisible().catch(() => false)) await snooze.click();
+await settle(admin);
+await admin.screenshot({ path: `${out}/cp-reviews.png` });
+
+// Import: an export uploaded and previewed (sample-export.csv, beside this script).
+await admin.goto(`${base}/cp/reviews/import`);
+await settle(admin);
+await admin.setInputFiles('input[type=file]', new URL('./sample-export.csv', import.meta.url).pathname);
+await admin.getByRole('button', { name: 'Preview' }).click();
+await admin.getByText('would be added').waitFor();
+await settle(admin);
+await admin.screenshot({ path: `${out}/cp-import.png` });
+
+// Sync: the sources reviews are synced from.
+await admin.goto(`${base}/cp/reviews/sync`);
+await settle(admin);
+await admin.screenshot({ path: `${out}/cp-sync.png` });
+
+if (process.env.REVIEW) {
+    await admin.goto(`${base}/cp/reviews/${process.env.REVIEW}`);
+    await settle(admin);
+    await admin.screenshot({ path: `${out}/cp-review.png` });
+}
+
+await browser.close();
+console.log(`Screenshots in ${out}`);

@@ -1,0 +1,1 @@
+{"provider": "custom", "values": {"headHtml": "<script src=\"/fake-cmp.js\"></script>", "connectJs": "FakeCmp.onChange(function (choice) { CookieConnect.set(choice); });", "openJs": "FakeCmp.open();"}, "google": {"gtmId": "GTM-ABC1234"}}
