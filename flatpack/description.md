@@ -8,7 +8,7 @@ No database, no new storage, no content changes. Flatpack replaces only the cach
 
 ## Builds in a fraction of the time
 
-`php please flatpack:build` replaces `stache:warm` in your deploy. The bigger the site and the deeper its page builders, the bigger the gain: 1.3× faster with fixed fields, 1.9× with a page builder, 3.3× with nested page builders.
+`php please flatpack:build` replaces `stache:warm` in your deploy. The bigger the site and the deeper its page builders, the bigger the gain: 1.3x faster with fixed fields, 1.9x with a page builder, 3.3x with nested page builders.
 
 ## A fraction of the memory
 
@@ -24,7 +24,7 @@ After a `git pull`, `php please flatpack:refresh` re-reads only the files that c
 
 ## In the Control Panel
 
-Utilities → Flatpack shows what's compiled, which content files have changed on disk since, and builds or refreshes with a click.
+Utilities > Flatpack shows what's compiled, which content files have changed on disk since, and builds or refreshes with a click.
 
 ## Honest about page loads
 
