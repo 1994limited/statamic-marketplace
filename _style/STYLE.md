@@ -22,7 +22,24 @@ Each addon owns one colour, its mark colour, used full bleed on its cover and as
 
 `ramp(colour)` gives the addon's lighter and darker steps: `shade` for the mark behind the cover claim, `light`/`mid`/`main` for the faces of highlighted isometric parts.
 
-**Open:** Abandoned Cart (`#582A45`), Back in Stock (`#4E2E55`) and Ingest (`#3C3461`) are too close to tell apart side by side. One or two of them should move before their covers are redrawn.
+The twelve colours, spaced so no two are too close side by side (the closest pair, Ghostwriter and Ingest, is ΔE 2000 11.6), and light enough that cream text keeps at least 5.2:1 contrast:
+
+| Addon | Colour | Folded corner |
+|---|---|---|
+| Wishlist | `#A82433` | `#D99FA5` |
+| Flatpack | `#9A4A12` | `#D9A57C` |
+| Reviews | `#5C2E17` | `#BF9380` |
+| Gift Vouchers | `#866300` | `#CABA8F` |
+| Social Images | `#4F5A10` | `#B2B696` |
+| Sign Off | `#1E6236` | `#9CBAA7` |
+| Cookie Connect | `#006B63` | `#8FBEBA` |
+| Promo Bar | `#0B6A8C` | `#94BDCC` |
+| Ghostwriter | `#1E4E9C` | `#9CB1D3` |
+| Ingest | `#4B3A94` | `#B0A8D0` |
+| Back in Stock | `#842B8A` | `#C9A2CC` |
+| Abandoned Cart | `#9A2A56` | `#D3A1B5` |
+
+The same values are in `house.mjs` (`addons`) and in each addon's `resources/brand/mark-colour.svg`. A new addon takes a hue not yet used, and is checked against these for ΔE 2000 of at least 11.
 
 ## Type
 

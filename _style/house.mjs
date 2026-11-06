@@ -11,7 +11,18 @@ export const statamicGrey = '#CFC9C0';
 
 // Each addon owns one colour: `main` is its mark colour; `tint` its folded-corner colour.
 export const addons = {
-    flatpack: { main: '#9A4A12', tint: '#D9A57C', name: 'Flatpack', part: 'FP' },
+    'flatpack': { main: '#9A4A12', tint: '#D9A57C', name: 'Flatpack', part: 'FP' },
+    'reviews': { main: '#5C2E17', tint: '#BF9380', name: 'Reviews', part: 'RV' },
+    'gift-vouchers': { main: '#866300', tint: '#CABA8F', name: 'Gift Vouchers', part: 'GV' },
+    'social-images': { main: '#4F5A10', tint: '#B2B696', name: 'Social Images', part: 'SI' },
+    'sign-off': { main: '#1E6236', tint: '#9CBAA7', name: 'Sign Off', part: 'SO' },
+    'cookie-connect': { main: '#006B63', tint: '#8FBEBA', name: 'Cookie Connect', part: 'CC' },
+    'promo-bar': { main: '#0B6A8C', tint: '#94BDCC', name: 'Promo Bar', part: 'PB' },
+    'ghostwriter': { main: '#1E4E9C', tint: '#9CB1D3', name: 'Ghostwriter', part: 'GW' },
+    'ingest': { main: '#4B3A94', tint: '#B0A8D0', name: 'Ingest', part: 'IN' },
+    'back-in-stock': { main: '#842B8A', tint: '#C9A2CC', name: 'Back in Stock', part: 'BS' },
+    'abandoned-cart': { main: '#9A2A56', tint: '#D3A1B5', name: 'Abandoned Cart', part: 'AC' },
+    'wishlist': { main: '#A82433', tint: '#D99FA5', name: 'Wishlist', part: 'WL' },
 };
 
 /** A light-to-dark ramp from an addon's colour, for isometric faces and soft fills. */

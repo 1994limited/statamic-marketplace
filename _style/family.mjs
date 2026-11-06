@@ -13,10 +13,10 @@ const chrome = process.env.CHROME || '/Applications/Google Chrome.app/Contents/M
 // colour, tint (from each addon's mark), claim, lede, facts: all from the addons' own READMEs.
 const family = [
     ['flatpack', 'Flatpack', '#9A4A12', '#D9A57C', 'Builds<br>3.3× faster.', 'Statamic’s flat files, compiled at deploy into PHP that OPcache serves from memory.', '67.3 s → 20.5 s · 2.2 GB → 363 MB · on a 9,000-entry site', 'for Statamic · free'],
-    ['social-images', 'Social Images', '#37420C', '#99A47A', 'A share image<br>for every entry.', 'Design a card once in the Control Panel. Every entry gets its own 1200 × 630 image when it’s saved.', 'og:image · twitter:image · made on save', 'for Statamic'],
-    ['ingest', 'Ingest', '#3C3461', '#9D99C2', 'Feeds in.<br>Kept in step.', 'Keep Statamic in step with the feeds you don’t control, on a schedule, with a preview and undo for every run.', 'JSON · XML · CSV · RSS · APIs · Google Sheets', 'for Statamic'],
-    ['abandoned-cart', 'Abandoned Cart', '#582A45', '#BA90A7', 'Left behind.<br>Brought back.', 'Up to three reminder emails, with a link that brings the shopper’s basket back at today’s prices.', 'reminders · discount codes · recovered revenue', 'for Statamic and Cargo'],
-    ['back-in-stock', 'Back in Stock', '#4E2E55', '#AF93B6', 'Tell me when<br>it’s back.', 'Shoppers leave their email on a sold-out product. When it’s back, they get one email.', 'variants · double opt-in · who’s waiting', 'for Statamic and Cargo'],
+    ['social-images', 'Social Images', '#4F5A10', '#B2B696', 'A share image<br>for every entry.', 'Design a card once in the Control Panel. Every entry gets its own 1200 × 630 image when it’s saved.', 'og:image · twitter:image · made on save', 'for Statamic'],
+    ['ingest', 'Ingest', '#4B3A94', '#B0A8D0', 'Feeds in.<br>Kept in step.', 'Keep Statamic in step with the feeds you don’t control, on a schedule, with a preview and undo for every run.', 'JSON · XML · CSV · RSS · APIs · Google Sheets', 'for Statamic'],
+    ['abandoned-cart', 'Abandoned Cart', '#9A2A56', '#D3A1B5', 'Left behind.<br>Brought back.', 'Up to three reminder emails, with a link that brings the shopper’s basket back at today’s prices.', 'reminders · discount codes · recovered revenue', 'for Statamic and Cargo'],
+    ['back-in-stock', 'Back in Stock', '#842B8A', '#C9A2CC', 'Tell me when<br>it’s back.', 'Shoppers leave their email on a sold-out product. When it’s back, they get one email.', 'variants · double opt-in · who’s waiting', 'for Statamic and Cargo'],
     ['reviews', 'Reviews', '#5C2E17', '#BF9380', 'Star ratings,<br>on your own site.', 'A review form for any entry, moderation in the Control Panel, and review schema in your templates.', 'ratings · photos · moderation · schema', 'for Statamic'],
 ];
 
