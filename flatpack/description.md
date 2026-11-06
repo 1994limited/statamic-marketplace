@@ -38,6 +38,10 @@ Laravel Forge and Laravel Cloud, with no PHP extensions beyond what they ship. O
 
 Every change runs a parity suite on Statamic 5 and 6: a three-language site with structured pages, page builders, taxonomies, navs and globals, run on plain Statamic and with Flatpack. Reads, saves (byte for byte), rebuilds and files changed on disk must all match.
 
+## Safe across Statamic updates
+
+Flatpack checks at boot that the parts of Statamic it relies on are still there. If a Statamic release changes one, Flatpack pauses itself and the site runs on Statamic's own Stache, as it would without Flatpack, until a Flatpack update catches up. `flatpack:status` and the Control Panel say why. The parity suite also runs daily against Statamic's unreleased branch, so changes are usually caught before they ship.
+
 ## Requirements
 
 Statamic 5.11 or later, or Statamic 6. PHP 8.2 or later. OPcache on for web requests (the default on Forge and Laravel Cloud). Content in files: Flatpack does nothing for content stored with the Eloquent driver.
