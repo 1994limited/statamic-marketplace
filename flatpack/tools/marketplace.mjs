@@ -40,7 +40,6 @@ const metric = {
     build: { label: 'Build at deploy', get: (r, m) => r[m].build.ms, unit: 'ms', word: 'faster' },
     memory: { label: 'Build memory', get: (r, m) => r[m].build.peak_mb, unit: 'MB', word: 'less' },
     page: { label: 'Typical page load', get: (r, m) => median(Object.values(r[m].pages)), unit: 'ms', word: 'faster' },
-    save: { label: 'Saving an entry', get: (r, m) => r[m].save.ms, unit: 'ms', word: 'faster' },
 };
 const val = (key, shape, size, mode) => metric[key].get(results[`${shape}-${size}`], mode);
 const fmt = (v, unit) => unit === 'MB' ? (v >= 1000 ? `${(v / 1024).toFixed(1)} GB` : `${Math.round(v)} MB`) : (v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${Math.round(v)} ms`);
@@ -115,7 +114,7 @@ function shapeDrawing(shape, ox, oy) {
         + w(ox + 30, oy + i * 34 + 6, 34, 30, 8, [tones.light, tones.mid, tones.main], { width: 2 })
         + w(ox + 82, oy + i * 34 + 6, 34, 30, 8, [tones.light, tones.mid, tones.main], { width: 2 })).join('');
 }
-const deeperRows = [['build', 'Build'], ['memory', 'Memory'], ['save', 'Saves']];
+const deeperRows = [['build', 'Build'], ['memory', 'Memory'], ['page', 'Pages']];
 frames['03-deeper'] = house.page({
     css: `.t { position: absolute; left: 72px; top: 170px; width: 520px; }
           .l { position: absolute; left: 72px; top: 520px; width: 470px; color: #3a3a3a; }
@@ -140,14 +139,15 @@ frames['03-deeper'] = house.page({
 });
 
 // ---------------------------------------------------------------- saves: an assembly diagram
+// No timing here on purpose. demo:compare times the first save after a build, which carries one-off
+// costs; a typical save takes about as long with Flatpack as without.
 
 const sheet = (ox, oy, hi) => house.box(ox, oy, 150, 110, 10, hi ? [tones.light, tones.mid, tones.main] : undefined);
-const [saveA, saveB] = big('save');
 frames['04-saves'] = house.page({
     css: `.t { position: absolute; left: 72px; top: 170px; width: 900px; }
           .cap { position: absolute; width: 330px; font: 500 19px/1.45 'IBM Plex Mono'; }`,
     body: `${sheetMeta('FP-04 · saving')}
-        <div class="title t">Saves that don't wait for the whole site</div>
+        <div class="title t">Saving works as it always has</div>
         <svg style="position:absolute;left:0;top:0" width="1600" height="900">
             ${house.box(270, 470, 180, 130, 10)}
             ${house.box(274, 477, 120, 14, 3)}${house.box(248, 492, 120, 14, 3)}${house.box(222, 507, 120, 14, 3)}
@@ -163,8 +163,7 @@ frames['04-saves'] = house.page({
         <div class="cap" style="left:110px;top:690px">Save an entry in the Control Panel, as now.</div>
         <div class="cap" style="left:620px;top:690px">Statamic writes the same .md file it always does.</div>
         <div class="cap" style="left:1080px;top:690px">Flatpack updates only that entry in the compiled copy.</div>
-        <div class="tab" style="right:72px;top:150px;background:${colour}"><b>${fmt(saveA, 'ms')} → ${fmt(saveB, 'ms')}</b><span>saving an entry, 9,000-entry site</span></div>
-        <div class="foot">${source} Saves are single measurements: read them as a direction.</div>`,
+        <div class="foot">The files on disk are byte for byte what Statamic writes without Flatpack. The parity suite checks it on every change.</div>`,
 });
 
 // ---------------------------------------------------------------- the deploy: numbered steps
@@ -248,7 +247,7 @@ for (const key of Object.keys(metric)) {
         body: `<div style="padding:36px 44px">
             <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px"><div class="title" style="font-size:54px">${metric[key].label}</div>${legend}</div>
             ${bars(key, 1112)}
-            <div style="font:400 14px 'IBM Plex Mono';color:${house.muted};margin-top:14px">${source}${key === 'save' ? ' Saves are single measurements.' : ''}</div></div>`,
+            <div style="font:400 14px 'IBM Plex Mono';color:${house.muted};margin-top:14px">${source}</div></div>`,
     });
 }
 
