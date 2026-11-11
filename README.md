@@ -2,7 +2,7 @@
 
 The Marketplace listing images, icons and listing text for 1994's Statamic addons, and the tools that draw them. They're kept here so they don't ship inside the addons people install; the addons' READMEs link to them.
 
-One folder per addon, named after its repo without `-statamic`: `abandoned-cart`, `back-in-stock`, `cookie-connect` (and `cookie-connect-craft`, for the Craft plugin), `flatpack`, `ghostwriter`, `gift-vouchers`, `ingest`, `promo-bar`, `reviews`, `sign-off`, `social-images` and `wishlist`. Each follows Flatpack's layout:
+One folder per addon, named after its repo without `-statamic`: `abandoned-cart`, `back-in-stock`, `cookie-connect` (and `cookie-connect-craft`, for the Craft plugin), `flatpack`, `ghostwriter`, `gift-vouchers`, `ingest`, `promo-bar`, `reviews`, `sign-off`, `newsletter`, `social-images` and `wishlist`. Each follows Flatpack's layout:
 
 ```
 flatpack/
