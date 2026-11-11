@@ -28,7 +28,7 @@ Every subscriber has an unsubscribe link that works with mail apps' one-click un
 
 ## No leaks, little spam
 
-The form says the same thing whether an address is new or already subscribed, so it can't be used to find out who is on your list. A hidden honeypot field, a limit on sign-ups per visitor and a limit on confirmation emails per address. No IP addresses are kept.
+The form says the same thing whether an address is new or already subscribed, so it can't be used to find out who is on your list. A hidden honeypot field, a limit on sign-ups per visitor and a limit on confirmation emails per address. And a captcha if you want one: Cloudflare Turnstile, hCaptcha, Google reCAPTCHA v2 or v3, or your own. No IP addresses are kept.
 
 ## Tidy
 

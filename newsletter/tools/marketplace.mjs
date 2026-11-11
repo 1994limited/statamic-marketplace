@@ -133,7 +133,7 @@ frames['03-clean'] = house.page({
           .g p { font: 500 19px/1.45 Archivo; color: #3a3a3a; margin-top: 12px; max-width: 360px; }`,
     body: `${sheetMeta('NL-03 · spam and privacy')}
         <div class="title t">A clean list, little spam</div>
-        <p class="lede l">A hidden honeypot field and limits on every form. The defaults, each one a line in the config.</p>
+        <p class="lede l">A hidden honeypot field and limits on every form, and a captcha if you want one: Turnstile, hCaptcha or reCAPTCHA.</p>
         <div class="grid">${guards.map(([n, unit, text]) => `<div class="g"><b>${n}</b><em>${unit}</em><p>${text}</p></div>`).join('')}</div>`,
 });
 
