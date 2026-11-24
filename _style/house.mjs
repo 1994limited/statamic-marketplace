@@ -24,6 +24,7 @@ export const addons = {
     'abandoned-cart': { main: '#9A2A56', tint: '#D3A1B5', name: 'Abandoned Cart', part: 'AC' },
     'wishlist': { main: '#A82433', tint: '#D99FA5', name: 'Wishlist', part: 'WL' },
     'newsletter': { main: '#665478', tint: '#B7AEC2', name: 'Newsletter', part: 'NL' },
+    'forms-captcha': { main: '#4A5560', tint: '#A8ADB3', name: 'Forms Captcha', part: 'FC' },
 };
 
 /** A light-to-dark ramp from an addon's colour, for isometric faces and soft fills. */
