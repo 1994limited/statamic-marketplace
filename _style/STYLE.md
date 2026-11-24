@@ -22,7 +22,7 @@ Each addon owns one colour, its mark colour, used full bleed on its cover and as
 
 `ramp(colour)` gives the addon's lighter and darker steps: `shade` for the mark behind the cover claim, `light`/`mid`/`main` for the faces of highlighted isometric parts.
 
-The thirteen colours, spaced so no two are too close side by side (the closest pair, Ghostwriter and Ingest, is ΔE 2000 11.6), and light enough that cream text keeps at least 5.2:1 contrast:
+The fourteen colours, spaced so no two are too close side by side (the closest pair, Ghostwriter and Ingest, is ΔE 2000 11.6), and light enough that cream text keeps at least 5.2:1 contrast:
 
 | Addon | Colour | Folded corner |
 |---|---|---|
@@ -39,6 +39,7 @@ The thirteen colours, spaced so no two are too close side by side (the closest p
 | Back in Stock | `#842B8A` | `#C9A2CC` |
 | Abandoned Cart | `#9A2A56` | `#D3A1B5` |
 | Newsletter | `#665478` | `#B7AEC2` |
+| Forms Captcha | `#4A5560` | `#A8ADB3` |
 
 The same values are in `house.mjs` (`addons`) and in each addon's `resources/brand/mark-colour.svg`. A new addon takes a hue not yet used, and is checked against these for ΔE 2000 of at least 11.
 
@@ -71,6 +72,7 @@ What the picture shows belongs to the addon, never borrowed from another:
 | Flatpack | Flat-pack assembly: isometric boards, numbered build steps, measured bars | `flatpack/03-deeper.png` |
 | Social Images | The share cards it makes, shown as neutral link previews | `preview/social-images-sheet.png` |
 | Newsletter | The post: a form, an envelope, a button pressed, the list as a ledger | `newsletter/01-double-opt-in.png` |
+| Forms Captcha | The form being checked: the ticked box, the widget in a form, a token stamped passed or refused | `forms-captcha/01-drag-in.png` |
 | Ingest | Feeds arriving and runs (yet to draw) | |
 | Cargo addons | Baskets, products and emails (yet to draw) | |
 
